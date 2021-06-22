@@ -31,36 +31,42 @@ def tweet_last_match():
     last_match_file.close()
 
     if(last_match_file_id != last_match_id):
-        last_match_file = open("lastmatch.txt", "w") #write the new 'last match'
-        last_match_file.write(str(last_match_id))
-        last_match_file.close()
-
         link_to_match = "https://matchhistory.br.leagueoflegends.com/pt/#match-details/"+my_region.upper+"/"+str(last_match_id)
 
-        last_match_stats = get_last_match_stats(watcher, sr_nome, my_region)
-        top_damage = format(last_match_stats['top_damage'],",")
-        top_kills = str(last_match_stats['top_kills'])
+        last_match_stats = get_last_match_stats(watcher, sr_nome, my_region, 0)
+        top_damage = format(last_match_stats['playerDamage'], ",")
+        top_kills = str(last_match_stats['playerKills'])
         champion_name = str(last_match_stats['champion'])
+        game_mode = str(last_match_stats['gameMode'])
 
-        champion_msg = sr_nome + " was playing "+champion_name
-        if(last_match_stats['top_damage_name']==sr_nome):
-            top_damage_msg = sr_nome + " did the most damage to champions? Yes! ("+top_damage+")"
+        print(champion_name)
+
+        killStats = ""
+        if(last_match_stats['pentaKills'] > 0):
+            killStats = "[PENTA KILL]"
+        elif(last_match_stats['quadraKills'] > 0):
+            killStats = "[QUADRA KILL]"
+
+        champion_msg = sr_nome + " was playing "+champion_name+" in " + game_mode
+        if(last_match_stats['top_damage_name'] == sr_nome):
+            top_damage_msg = "Top damage to players? Yes! ("+top_damage+")"
         else:
-            top_damage_msg = sr_nome +" did the most damage to champions? No! ("+top_damage+")"
-        if(last_match_stats['top_kills_name']==sr_nome):
-            top_kills_msg = sr_nome + " had the most kills? Yes! ("+top_kills+")"
+            top_damage_msg = "Top damage to players? No! ("+top_damage+")"
+        if(last_match_stats['top_kills_name'] == sr_nome):
+            top_kills_msg = "Top kills? Yes! ("+top_kills+")"
         else:
-            top_kills_msg = sr_nome + " had the most kills? No! ("+top_kills+")"
+            top_kills_msg = "Top kills? No! ("+top_kills+")"
 
-        #this part of the code was used for debugging only
-        #twitter_user_id = 855200195654684672 #you can get it from your 
-        #api.send_direct_message(twitter_user_id, champion_msg + "\n"+top_damage_msg + "\n" + top_kills_msg)
-        #api.send_direct_message(twitter_user_id, link_to_match) #send a dm with the link
-
-        tweet = champion_msg +"\n"+top_damage_msg + "\n" + top_kills_msg + "\n" + link_to_match
+        #api.send_direct_message(855200195654684672, champion_msg + "\n"+top_damage_msg + "\n" + top_kills_msg)
+        tweet = killStats + "\n" + champion_msg + "\n" + \
+            top_damage_msg + "\n" + top_kills_msg + "\n" + link_to_match
         print("Tweeting last match...")
+        #api.send_direct_message(855200195654684672, link_to_match) #send a dm with the link
         api.update_status(tweet)
         print("Done!")
+        last_match_file = open("lastmatch.txt", "w")
+        last_match_file.write(str(last_match_id))
+        last_match_file.close()
     else:
         print("Already tweeted last match!")
 
